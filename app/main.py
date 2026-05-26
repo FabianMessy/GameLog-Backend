@@ -1,35 +1,20 @@
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-from typing import List
+from contextlib import asynccontextmanager
 
-app = FastAPI()
+from fastapi import FastAPI
 
-games_db = [
-    {
-        "id": 1,
-        "titulo": "Cyberpunk 2077",
-        "descricao": "RPG futurista",
-        "nota_media": 4.2
-    },
-    {
-        "id": 2,
-        "titulo": "Hollow Knight",
-        "descricao": "Metroidvania indie",
-        "nota_media": 4.8
-    }
-]
+from app.core.database import create_db
 
-class LibraryCreate(BaseModel):
-    user_id: int
-    game_id: int
-    status: str
+from app.routes.auth import router as auth_router
+from app.routes.games import router as games_router
 
-@app.get("/games")
-def listar_jogos():
-    return games_db
 
-@app.get("/games/{game_id}")
-def search_game(game_id:int):
-    for game in games_db:
-        if game["id"] == game_id:
-            return game
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    create_db()
+    yield
+
+app = FastAPI(lifespan=lifespan)
+
+
+app.include_router(auth_router)
+app.include_router(games_router)
