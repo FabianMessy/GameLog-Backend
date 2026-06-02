@@ -1,8 +1,6 @@
 # Ignorar pastas e arquivos Python compilados
 __pycache__/
 *.py[cod]
-# Ignorar Variáveis de ambiente
-.env
 
 #Evita subir ambiente virutal para o repositório
 env
