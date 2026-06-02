@@ -2,6 +2,9 @@
 __pycache__/
 *.py[cod]
 
+# Ignorar arquivos de configuração do ambiente virtual
+.env
+
 #Evita subir ambiente virutal para o repositório
 env
 venv
