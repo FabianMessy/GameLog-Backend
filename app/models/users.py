@@ -1,6 +1,8 @@
-from typing import Optional
+from typing import Optional, List
 from datetime import date
-from sqlmodel import SQLModel, Field
+from sqlmodel import SQLModel, Field, Relationship
+
+from models.library import Library
 
 class User(SQLModel, table=True):
     __tablename__ = "tb_usuarios"
@@ -10,6 +12,11 @@ class User(SQLModel, table=True):
         primary_key=True
     )
 
+    usr_avatar_url: Optional[str] = Field(
+    default=None,
+    max_length=255
+    )
+    
     usr_nome_usuario: str = Field(
         max_length=80
     )
@@ -28,6 +35,16 @@ class User(SQLModel, table=True):
         max_length=45
     )
 
+    usr_bio: Optional[str] = Field(
+    default=None,
+    max_length=500
+    )
+    
     usr_created_at: date = Field(
         default_factory=date.today
+    )
+
+    # Um usuário pode ter vários jogos na biblioteca
+    biblioteca: List["Library"] = Relationship(
+        back_populates="usuario"
     )
