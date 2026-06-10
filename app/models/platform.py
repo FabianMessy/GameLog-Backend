@@ -13,6 +13,7 @@ class Platform(SQLModel, table=True):
 
     plt_nome: str = Field(
         unique=True,
+        min_length=2,
         max_length=50
     )
 

@@ -13,6 +13,7 @@ class Genre(SQLModel, table=True):
 
     gen_nome: str = Field(
         unique=True,
+        min_length=2,
         max_length=50
     )
 

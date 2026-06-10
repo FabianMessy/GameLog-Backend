@@ -7,6 +7,10 @@ from models.library import Library
 class User(SQLModel, table=True):
     __tablename__ = "tb_usuarios"
 
+    usr_admin: bool = Field(
+    default=False
+    )
+    
     usr_id: Optional[int] = Field(
         default=None,
         primary_key=True
@@ -18,6 +22,8 @@ class User(SQLModel, table=True):
     )
     
     usr_nome_usuario: str = Field(
+       unique=True,
+        index=True,
         max_length=80
     )
 
@@ -32,7 +38,8 @@ class User(SQLModel, table=True):
     )
 
     usr_senha: str = Field(
-        max_length=45
+        min_length= 8,
+        max_length=255
     )
 
     usr_bio: Optional[str] = Field(
