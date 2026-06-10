@@ -28,7 +28,7 @@ def buscar_na_rawg(nome: str):
 
 @router.get("/{game_id}")
 def get_game(game_id: int,session: SessionDep):
-    game = session.get(Game,game_id)
+    game = session.get(Game, game_id)
 
     if not game:
         raise HTTPException(
@@ -37,4 +37,3 @@ def get_game(game_id: int,session: SessionDep):
         )
 
     return game
-
