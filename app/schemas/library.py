@@ -1,9 +1,13 @@
+from __future__ import annotations
 from datetime import date, datetime
 from pydantic import BaseModel
 
-from models.library import LibraryStatus
-from schemas.user import UserSimpleResponse
-from schemas.game import GameSimpleResponse
+from app.models.library import LibraryStatus
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.schemas.user import UserSimpleResponse
+    from app.schemas.game import GameSimpleResponse
 
 class LibraryCreate(BaseModel):
     bib_status: LibraryStatus

@@ -1,8 +1,10 @@
-from typing import Optional, List
+
+from typing import Optional, List, TYPE_CHECKING
 from datetime import date
 from sqlmodel import SQLModel, Field, Relationship
 
-from models.library import Library
+if TYPE_CHECKING:
+    from app.models.library import Library
 
 class User(SQLModel, table=True):
     __tablename__ = "tb_usuarios"
@@ -22,7 +24,7 @@ class User(SQLModel, table=True):
     )
     
     usr_nome_usuario: str = Field(
-       unique=True,
+        unique=True,
         index=True,
         max_length=80
     )
@@ -52,6 +54,6 @@ class User(SQLModel, table=True):
     )
 
     # Um usuário pode ter vários jogos na biblioteca
-    biblioteca: List["Library"] = Relationship(
-        back_populates="usuario"
-    )
+    biblioteca: list["Library"] = Relationship(
+            back_populates="usuario"
+        )

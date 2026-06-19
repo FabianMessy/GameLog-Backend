@@ -1,7 +1,8 @@
+
 from typing import Optional, List
 from sqlmodel import SQLModel, Field, Relationship
-from models.game import Game
-from models.game_platform import GamePlatform
+from app.models.game import Game
+from app.models.game_platform import GamePlatform
 
 class Platform(SQLModel, table=True):
     __tablename__ = "tb_plataformas"

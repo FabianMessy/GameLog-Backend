@@ -1,7 +1,8 @@
+from __future__ import annotations
 from datetime import date
 from pydantic import BaseModel, HttpUrl
-from schemas.genre import GenreSimpleResponse
-from schemas.platform import PlatformSimpleResponse
+from app.schemas.genre import GenreSimpleResponse
+from app.schemas.platform import PlatformSimpleResponse
 
 class GameCreate(BaseModel):
     jgs_titulo: str

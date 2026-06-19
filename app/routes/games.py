@@ -1,14 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlmodel import Session, select, session
+from sqlmodel import Session, select
 from app.models.users import User
 from app.schemas.game import GameCreate, GameDetailResponse, GameSimpleResponse, GameUpdate
 from app.models.game import Game
 from app.core.dependencies import SessionDep
 from app.core.dependencies_auth import AdminUser
 from app.services.rawg_service import buscar_jogos_rawg
-from services.game_service import GameService
 from typing import List
-
+from fastapi import Depends
+from app.core.dependencies_game import get_game_service
+from app.services.game_service import GameService
 router = APIRouter(prefix="/games",tags=["Games"])
 
 # @router.delete("/{id}")
@@ -31,7 +32,7 @@ router = APIRouter(prefix="/games",tags=["Games"])
 #     return papel_db
 
 @router.post("/", response_model=Game)
-def criar_jogo(game: Game, user: AdminUser, service: GameService):
+def criar_jogo(game: Game,user: AdminUser,service: GameService = Depends(get_game_service)):
     service.criar_jogos(game)
     return {
             "message": f"Jogo (id:{game.jgs_id}) cadastrado com sucesso!",
@@ -39,9 +40,10 @@ def criar_jogo(game: Game, user: AdminUser, service: GameService):
             }
     
 
-@router.get("/", response_model=List[Game])
-def listar_jogos(service: GameService) -> List[Game]:
-
+@router.get("/")
+def listar_jogos(
+    service: GameService = Depends(get_game_service)
+):
     return service.listar_jogos()
 
 @router.get("/rawg/search")

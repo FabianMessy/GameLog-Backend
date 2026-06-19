@@ -4,7 +4,7 @@ __pycache__/
 
 # Ignorar arquivos de configuração do ambiente virtual
 .env
-
+.db
 #Evita subir ambiente virutal para o repositório
 env
 venv

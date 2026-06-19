@@ -1,11 +1,14 @@
-from typing import Optional, List
+from __future__ import annotations
+from typing import Optional, TYPE_CHECKING
 from datetime import date, datetime
 from sqlmodel import SQLModel, Field, Relationship
 from enum import Enum
 from sqlalchemy import UniqueConstraint
 
-from models.game import Game
-from models.users import User
+if TYPE_CHECKING:
+    from app.models.game import Game
+    from app.models.users import User
+
 
 class LibraryStatus(str, Enum):
     JOGANDO = "jogando"
@@ -68,10 +71,10 @@ class Library(SQLModel, table=True):
     )
 
     # Relacionamentos
-    usuario: "User" = Relationship(
+    usuario: User = Relationship(
         back_populates="biblioteca"
     )
 
-    jogo: "Game" = Relationship(
+    jogo: Game = Relationship(
         back_populates="bibliotecas"
     )

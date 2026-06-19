@@ -6,7 +6,7 @@ from app.core.database import create_db
 
 from app.routes.auth import router as auth_router
 from app.routes.games import router as games_router
-
+import app.models
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

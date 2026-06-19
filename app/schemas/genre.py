@@ -1,3 +1,4 @@
+from __future__ import annotations
 from pydantic import BaseModel
 
 class GenreCreate(BaseModel):
@@ -6,7 +7,7 @@ class GenreCreate(BaseModel):
 class GenreUpdate(BaseModel):
     gen_nome: str
 
-class GenreResponse(BaseModel):
+class GenreSimpleResponse(BaseModel):
     gen_id: int
     gen_nome: str
 

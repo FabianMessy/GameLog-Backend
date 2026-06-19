@@ -1,7 +1,8 @@
+
 from typing import Optional, List
 from sqlmodel import SQLModel, Field, Relationship
-from models.game import Game
-from models.game_genre import GameGenre
+from app.models.game import Game
+from app.models.game_genre import GameGenre
 
 class Genre(SQLModel, table=True):
     __tablename__ = "tb_generos"

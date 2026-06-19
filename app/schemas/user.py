@@ -1,7 +1,10 @@
+from __future__ import annotations
 from datetime import date
 from pydantic import BaseModel, EmailStr, HttpUrl
 
-from schemas.library import LibrarySimpleResponse
+from typing import TYPE_CHECKING    
+if TYPE_CHECKING:
+    from app.schemas.library import LibrarySimpleResponse
 
 class UserCreate(BaseModel):
     usr_nome_usuario: str
@@ -12,6 +15,9 @@ class UserCreate(BaseModel):
     usr_avatar_url: HttpUrl | None = None
     usr_bio: str | None = None
 
+class UserLogin(BaseModel):
+    usr_email: EmailStr
+    usr_senha: str
 
 class UserUpdate(BaseModel):
     usr_nome_usuario: str | None = None

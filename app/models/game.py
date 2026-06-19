@@ -1,13 +1,17 @@
-from typing import Optional, List
+
+
+from typing import Optional, List, TYPE_CHECKING
 from datetime import date
 from sqlmodel import SQLModel, Field, Relationship
 
-from models.library import Library
-from models.genre import Genre
-from models.game_genre import GameGenre
-from models.platform import Platform
-from models.game_platform import GamePlatform
+from app.models.game_genre import GameGenre
+from app.models.game_platform import GamePlatform
 
+if TYPE_CHECKING:
+    from app.models.library import Library
+    from app.models.genre import Genre
+    from app.models.platform import Platform
+    
 class Game(SQLModel, table=True):
     __tablename__ = "tb_jogos"
 

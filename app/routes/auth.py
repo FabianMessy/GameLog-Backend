@@ -23,7 +23,7 @@ def register(user: UserCreate, session: SessionDep):
         usr_senha=hash_password(user.usr_senha),
 
         usr_bio=user.usr_bio,
-        usr_avatar_url=user.usr_avatar_url
+        usr_avatar_url=str(user.usr_avatar_url)
     )
 
     session.add(usr_novo)
