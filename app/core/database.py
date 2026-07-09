@@ -8,6 +8,10 @@ from app.models.genre import Genre
 from app.models.platform import Platform
 from app.models.game_genre import GameGenre
 from app.models.game_platform import GamePlatform
+from app.models.library import Library
+
+connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
+
 
 engine = create_engine(
     DATABASE_URL,
