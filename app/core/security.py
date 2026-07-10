@@ -49,6 +49,7 @@ def create_access_token(data: dict):
 
 
 def verify_token(token: str):
+    print("SECRET_KEY:", SECRET_KEY)
     try:
         payload = jwt.decode(
             token,
@@ -58,5 +59,7 @@ def verify_token(token: str):
 
         return payload
 
-    except jwt.InvalidTokenError:
+    except Exception as e:
+        print(type(e))
+        print(e)
         return None

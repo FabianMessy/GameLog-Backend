@@ -12,8 +12,10 @@ def get_current_user(
     session: SessionDep,
     token: str = Depends(oauth2_scheme)
 ):
+    print(f"TOKEN RECEBIDO: {token}")
 
     payload = verify_token(token)
+    print(f"PAYLOAD: {payload}")
 
     if not payload:
         raise HTTPException(
