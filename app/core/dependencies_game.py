@@ -1,11 +1,23 @@
-from app.core.dependencies import SessionDep
+from typing import Annotated
 
+from fastapi import Depends
+
+from app.core.dependencies import SessionDep
+from app.repositories.game_repository import GameRepository
 from app.services.game_service import GameService
-from app.services.game_service import GameServiceImpl
+from app.services.implementation.game_service_implementation import GameServiceImpl
+
+
+def get_game_repository(
+    session: SessionDep,
+) -> GameRepository:
+    return GameRepository(session)
 
 
 def get_game_service(
-    session: SessionDep
+    repository: Annotated[
+        GameRepository,
+        Depends(get_game_repository)
+    ],
 ) -> GameService:
-
-    return GameServiceImpl(session)
+    return GameServiceImpl(repository)

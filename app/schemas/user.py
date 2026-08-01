@@ -46,3 +46,7 @@ class UserSimpleResponse(BaseModel):
 
 class UserDetailResponse(UserSimpleResponse):
     biblioteca: list[LibrarySimpleResponse]
+
+from app.schemas.library import LibrarySimpleResponse
+
+UserDetailResponse.model_rebuild()

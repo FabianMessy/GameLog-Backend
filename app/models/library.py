@@ -59,7 +59,7 @@ class Library(SQLModel, table=True):
     )
 
     bib_jgs_horas_jogadas: int = Field(
-    default=0
+    default=0, ge=0
     )
     
     bib_usr_id: int = Field(

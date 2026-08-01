@@ -3,20 +3,15 @@ from datetime import date, datetime
 from pydantic import BaseModel
 
 from app.models.library import LibraryStatus
-from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from app.schemas.user import UserSimpleResponse
-    from app.schemas.game import GameSimpleResponse
+from app.schemas.user import UserSimpleResponse
+from app.schemas.game import GameSimpleResponse
 
 class LibraryCreate(BaseModel):
     bib_status: LibraryStatus
-    bib_usr_id: int
     bib_jgs_id: int
-
     bib_usr_nota: int | None = None
     bib_usr_avaliacao: str | None = None
-
     bib_jgs_favorito: bool = False
     bib_jgs_horas_jogadas: int = 0
 
@@ -55,3 +50,8 @@ class LibrarySimpleResponse(BaseModel):
 class LibraryDetailResponse(LibrarySimpleResponse):
     usuario: UserSimpleResponse
     jogo: GameSimpleResponse
+
+from app.schemas.user import UserSimpleResponse
+from app.schemas.game import GameSimpleResponse
+
+LibraryDetailResponse.model_rebuild()   

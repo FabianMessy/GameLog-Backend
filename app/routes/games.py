@@ -1,13 +1,13 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException
-from typing import List
 
-
-from sqlmodel import Session, select
-from app.models.users import User
-from app.models.game import Game
-
-
-from app.schemas.game import GameCreate, GameDetailResponse, GameSimpleResponse, GameUpdate
+from app.schemas.game import (
+    GameCreate,
+    GameDetailResponse,
+    GameSimpleResponse,
+    GameUpdate,
+)
 
 from app.core.dependencies import SessionDep
 from app.core.dependencies_auth import AdminUser
@@ -16,44 +16,26 @@ from app.core.dependencies_game import get_game_service
 from app.services.rawg_service import buscar_jogos_rawg
 from app.services.rawg_import_service import importar_jogos_rawg
 from app.services.game_service import GameService
-router = APIRouter(prefix="/games",tags=["Games"])
 
-
-# @router.delete("/{id}")
-# def delete_papel(id: int, session: SessionDep)-> None:
-#     papel = session.query(Papel).get(id)
-#     session.delete(papel)
-#     session.commit()
-
-# @router.put("/{id}",response_model=Papel)
-# def update_papel(id: int, papel: Papel, session: SessionDep)-> Papel:
-#     papel_db= session.query(Papel).get(id)
-#     if papel_db is None:
-#         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Papel não encontrado")
-#     for key, value in papel.model_dump(exclude_unset=True).items():
-#         setattr(papel_db, key, value)
-#     session.add(papel_db)
-#     session.commit()
-#     session.refresh(papel_db)
-#     session.commit()
-#     return papel_db
+router = APIRouter(prefix="/games", tags=["Games"])
 
 
 @router.post("/")
 def criar_jogo(
-    game: Game,
+    dados: GameCreate,
     user: AdminUser,
-    service: GameService = Depends(get_game_service),
+    service: Annotated[GameService, Depends(get_game_service)],
 ):
-    service.criar_jogos(game)
+    jogo = service.criar_jogo(dados)
     return {
-        "message": f"Jogo (id:{game.jgs_id}) cadastrado com sucesso!",
-        "id": game.jgs_id,
+        "message": f"Jogo (id:{jogo.jgs_id}) cadastrado com sucesso!",
+        "id": jogo.jgs_id,
     }
 
-@router.get("/")
+
+@router.get("/", response_model=list[GameSimpleResponse])
 def listar_jogos(
-    service: GameService = Depends(get_game_service),
+    service: Annotated[GameService, Depends(get_game_service)],
 ):
     return service.listar_jogos()
 
@@ -93,14 +75,28 @@ def importar_rawg_para_banco(
         raise HTTPException(status_code=500, detail=str(exc))
 
 
-@router.get("/{game_id}", response_model=Game)
-def get_game_by_id(game_id: int, session: SessionDep) -> Game:
-    game = session.get(Game, game_id)
+@router.get("/{game_id}", response_model=GameDetailResponse)
+def get_game_by_id(
+    game_id: int,
+    service: Annotated[GameService, Depends(get_game_service)],
+):
+    return service.buscar_por_id(game_id)
 
-    if not game:
-        raise HTTPException(
-            status_code=404,
-            detail="Jogo não encontrado",
-        )
 
-    return game
+@router.put("/{game_id}", response_model=GameDetailResponse)
+def atualizar_jogo(
+    game_id: int,
+    dados: GameUpdate,
+    user: AdminUser,
+    service: Annotated[GameService, Depends(get_game_service)],
+):
+    return service.atualizar(game_id, dados)
+
+
+@router.delete("/{game_id}", status_code=204)
+def remover_jogo(
+    game_id: int,
+    user: AdminUser,
+    service: Annotated[GameService, Depends(get_game_service)],
+):
+    service.remover(game_id)

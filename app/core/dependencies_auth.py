@@ -1,8 +1,8 @@
 from fastapi import Depends, HTTPException
-from sqlmodel import select
 
 from app.models.users import User
 from app.core.dependencies import SessionDep
+from app.repositories.users_repository import UsersRepository
 from app.core.security import (
     verify_token,
     oauth2_scheme
@@ -12,10 +12,7 @@ def get_current_user(
     session: SessionDep,
     token: str = Depends(oauth2_scheme)
 ):
-    print(f"TOKEN RECEBIDO: {token}")
-
     payload = verify_token(token)
-    print(f"PAYLOAD: {payload}")
 
     if not payload:
         raise HTTPException(
@@ -23,11 +20,7 @@ def get_current_user(
             detail="Token inválido"
         )
 
-    user = session.exec(
-        select(User).where(
-            User.usr_id == payload["user_id"]
-        )
-    ).first()
+    user = UsersRepository(session).get_by_id(payload["user_id"])
 
     if not user:
         raise HTTPException(

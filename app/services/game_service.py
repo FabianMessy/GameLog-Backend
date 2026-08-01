@@ -1,31 +1,27 @@
-from app.models.game import Game
 from abc import ABC, abstractmethod
+
+from app.models.game import Game
+from app.schemas.game import GameCreate, GameUpdate
+
 
 class GameService(ABC):
 
     @abstractmethod
-    def criar_jogos(self, game: Game):
+    def criar_jogo(self, dados: GameCreate) -> Game:
         pass
 
     @abstractmethod
-    def listar_jogos(self)->list[Game]:
+    def listar_jogos(self) -> list[Game]:
         pass
 
-from sqlmodel import select
+    @abstractmethod
+    def buscar_por_id(self, game_id: int) -> Game:
+        pass
 
-from app.models.game import Game
+    @abstractmethod
+    def atualizar(self, game_id: int, dados: GameUpdate) -> Game:
+        pass
 
-class GameServiceImpl(GameService):
-
-    def __init__(self, session):
-        self.session = session
-
-    def criar_jogos(self, game: Game):
-        self.session.add(game)
-        self.session.commit()
-        self.session.refresh(game)
-
-    def listar_jogos(self):
-        return self.session.exec(
-            select(Game)
-        ).all()
+    @abstractmethod
+    def remover(self, game_id: int) -> None:
+        pass
