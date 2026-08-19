@@ -4,7 +4,9 @@ from typing import Any
 
 import httpx
 
-from app.core.config import RAWG_API_KEY
+from app.core.config import settings
+
+RAWG_API_KEY = settings.RAWG_API_KEY
 
 RAWG_BASE_URL = "https://api.rawg.io/api"
 

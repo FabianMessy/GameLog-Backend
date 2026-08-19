@@ -1,6 +1,8 @@
 from sqlmodel import create_engine, Session, SQLModel
 
-from app.core.config import DATABASE_URL
+from app.core.config import settings
+
+DATABASE_URL = settings.DATABASE_URL
 
 from app.models.users import User
 from app.models.game import Game
@@ -17,7 +19,7 @@ connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite")
 engine = create_engine(
     DATABASE_URL,
     echo=True,
-    connect_args={"check_same_thread": False}
+    connect_args=connect_args
 )
 
 def create_db():

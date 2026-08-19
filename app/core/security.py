@@ -1,6 +1,8 @@
 import jwt
 from datetime import datetime, timedelta
-from app.core.config import SECRET_KEY
+from app.core.config import settings
+
+SECRET_KEY = settings.SECRET_KEY
 
 from passlib.context import CryptContext
 from fastapi.security import OAuth2PasswordBearer
