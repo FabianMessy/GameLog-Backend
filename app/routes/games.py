@@ -13,7 +13,7 @@ from app.core.dependencies import SessionDep
 from app.core.dependencies_auth import AdminUser
 from app.core.dependencies_game import get_game_service
 
-from app.services.rawg_service import buscar_jogos_rawg
+from app.services.rawg_service import buscar_jogos_rawg, listar_jogos_rawg
 from app.services.rawg_import_service import importar_jogos_rawg
 from app.services.game_service import GameService
 
@@ -51,6 +51,33 @@ def buscar_na_rawg(
             nome=nome,
             page_size=page_size,
             page=page,
+        )
+    except RuntimeError as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+@router.get("/rawg/lista")
+def listar_jogos_da_rawg(
+    nome: str | None = None,
+    genero: str | None = None,
+    tag: str | None = None,
+    ordering: str | None = None,
+    page: int = 1,
+    page_size: int = 20,
+):
+    """
+    Lista jogos direto da RAWG (sem exigir 'nome' e sem tocar no banco
+    local) — é o que alimenta o catálogo: destaques, categorias e busca
+    usam essa mesma rota, só variando os parâmetros.
+    """
+    try:
+        return listar_jogos_rawg(
+            nome=nome,
+            genero=genero,
+            tag=tag,
+            ordering=ordering,
+            page=page,
+            page_size=page_size,
         )
     except RuntimeError as exc:
         raise HTTPException(status_code=500, detail=str(exc))
