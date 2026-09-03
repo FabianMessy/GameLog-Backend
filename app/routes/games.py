@@ -10,11 +10,18 @@ from app.schemas.game import (
 )
 
 from app.core.dependencies import SessionDep
-from app.core.dependencies_auth import AdminUser
+from app.core.dependencies_auth import AdminUser, CurrentUser
 from app.core.dependencies_game import get_game_service
 
-from app.services.rawg_service import buscar_jogos_rawg, listar_jogos_rawg
-from app.services.rawg_import_service import importar_jogos_rawg
+from app.services.rawg_service import (
+    buscar_detalhes_jogo_rawg,
+    buscar_jogos_rawg,
+    listar_jogos_rawg,
+)
+from app.services.rawg_import_service import (
+    importar_jogos_rawg,
+    obter_ou_criar_jogo_por_rawg_id,
+)
 from app.services.game_service import GameService
 
 router = APIRouter(prefix="/games", tags=["Games"])
@@ -79,6 +86,40 @@ def listar_jogos_da_rawg(
             page=page,
             page_size=page_size,
         )
+    except RuntimeError as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+@router.get("/rawg/{rawg_id}")
+def detalhes_do_jogo_rawg(rawg_id: int):
+    """
+    Detalhes de um jogo direto da RAWG (não é o mesmo endpoint de
+    /games/{game_id}, que busca no banco local). Alimenta a página de
+    detalhes do jogo.
+    """
+    try:
+        return buscar_detalhes_jogo_rawg(rawg_id)
+    except RuntimeError as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+@router.post("/rawg/{rawg_id}/importar-um", response_model=GameSimpleResponse)
+def importar_um_jogo_da_rawg(
+    rawg_id: int,
+    session: SessionDep,
+    user: CurrentUser,
+):
+    """
+    Garante que o jogo da RAWG exista em tb_jogos e devolve o registro
+    local (com jgs_id) — é o passo que roda antes de POST /library
+    quando o usuário clica em "Adicionar à Biblioteca" num jogo que
+    veio do catálogo (RAWG), que ainda não tem id local. Qualquer
+    usuário logado pode chamar (diferente de /rawg/importar, que é só
+    admin), porque aqui só materializa o UM jogo que a pessoa está
+    tentando adicionar, não faz import em massa.
+    """
+    try:
+        return obter_ou_criar_jogo_por_rawg_id(session, rawg_id)
     except RuntimeError as exc:
         raise HTTPException(status_code=500, detail=str(exc))
 

@@ -176,3 +176,66 @@ def importar_jogos_rawg(
         "ignorados": ignorados,
         "erros": erros,
     }
+
+
+def obter_ou_criar_jogo_por_rawg_id(session: Session, rawg_id: int) -> Game:
+    """
+    Usada pelo botão "Adicionar à Biblioteca" na página de detalhes: como
+    a biblioteca só sabe apontar pra um jogo que já existe em tb_jogos
+    (bib_jgs_id é FK), e o catálogo mostra jogos direto da RAWG sem
+    tocar no banco, precisamos de um jeito de "materializar" só o jogo
+    que o usuário quer adicionar — sem precisar ser admin nem rodar o
+    /rawg/importar em lote.
+
+    Segue a mesma lógica de deduplicação que já existia em
+    importar_jogos_rawg (casa por jgs_titulo, não existe uma coluna de
+    rawg_id na tabela ainda). Se o jogo já foi importado antes (por
+    esse fluxo ou pelo /rawg/importar do admin), reaproveita o
+    registro em vez de duplicar.
+    """
+    detalhes = buscar_detalhes_jogo_rawg(rawg_id)
+    titulo = _limitar_texto(detalhes.get("name"), 45)
+
+    jogo = session.exec(
+        select(Game).where(Game.jgs_titulo == titulo)
+    ).first()
+    if jogo:
+        return jogo
+
+    desenvolvedor = _obter_nome_primeiro_item(detalhes.get("developers"))
+    distribuidor = _obter_nome_primeiro_item(detalhes.get("publishers"))
+    descricao = detalhes.get("description_raw") or detalhes.get("name")
+
+    jogo = Game(
+        jgs_titulo=titulo,
+        jgs_descricao=_limitar_texto(descricao, 120),
+        jgs_lancamento=_converter_data(detalhes.get("released")),
+        jgs_desenvolvedor=_limitar_texto(desenvolvedor, 120),
+        jgs_distribuidor=_limitar_texto(distribuidor, 120),
+        # aqui (diferente do import em lote) guarda None em vez de ""
+        # quando não tem capa — string vazia quebra a validação de
+        # HttpUrl do GameSimpleResponse na resposta dessa rota.
+        jgs_capa_url=detalhes.get("background_image") or None,
+        jgs_nota_media=float(detalhes.get("rating") or 0),
+    )
+
+    session.add(jogo)
+    session.commit()
+    session.refresh(jogo)
+
+    for genero_raw in detalhes.get("genres", []):
+        nome_genero = genero_raw.get("name")
+        if nome_genero:
+            genero = _get_or_create_genero(session, nome_genero)
+            _linkar_genero(session, jogo.jgs_id, genero.gen_id)
+
+    for plataforma_raw in detalhes.get("platforms", []):
+        plataforma_info = plataforma_raw.get("platform") or {}
+        nome_plataforma = plataforma_info.get("name")
+        if nome_plataforma:
+            plataforma = _get_or_create_plataforma(session, nome_plataforma)
+            _linkar_plataforma(session, jogo.jgs_id, plataforma.plt_id)
+
+    session.commit()
+    session.refresh(jogo)
+    return jogo
