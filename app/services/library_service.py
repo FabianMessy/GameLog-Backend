@@ -24,6 +24,7 @@ class LibraryService(ABC):
     @abstractmethod
     def buscar_por_id(
         self,
+        usuario_id: int,
         bib_id: int
     ) -> Library:
         pass
@@ -31,6 +32,7 @@ class LibraryService(ABC):
     @abstractmethod
     def atualizar(
         self,
+        usuario_id: int,
         bib_id: int,
         dados: LibraryUpdate
     ) -> Library:
@@ -39,6 +41,7 @@ class LibraryService(ABC):
     @abstractmethod
     def remover(
         self,
+        usuario_id: int,
         bib_id: int
     ):
         pass

@@ -46,12 +46,17 @@ class LibraryServiceImpl(LibraryService):
 
     def buscar_por_id(
         self,
+        usuario_id: int,
         bib_id: int
     ):
 
         biblioteca = self.repository.get_by_id(bib_id)
 
-        if not biblioteca:
+        # Mesma mensagem/status pra "não existe" e "existe mas não é seu":
+        # se fosse 403 só quando existe, dava pra descobrir que um bib_id
+        # é válido (de outro usuário) só testando várias ids e vendo qual
+        # muda de 404 pra 403. Com 404 nos dois casos, isso não vaza.
+        if not biblioteca or biblioteca.bib_usr_id != usuario_id:
             raise HTTPException(
                 status_code=404,
                 detail="Registro não encontrado."
@@ -61,11 +66,12 @@ class LibraryServiceImpl(LibraryService):
 
     def atualizar(
         self,
+        usuario_id: int,
         bib_id: int,
         dados: LibraryUpdate
     ):
 
-        biblioteca = self.buscar_por_id(bib_id)
+        biblioteca = self.buscar_por_id(usuario_id, bib_id)
 
         update = dados.model_dump(exclude_unset=True)
 
@@ -78,9 +84,10 @@ class LibraryServiceImpl(LibraryService):
 
     def remover(
         self,
+        usuario_id: int,
         bib_id: int
     ):
 
-        biblioteca = self.buscar_por_id(bib_id)
+        biblioteca = self.buscar_por_id(usuario_id, bib_id)
 
         self.repository.delete(biblioteca)
