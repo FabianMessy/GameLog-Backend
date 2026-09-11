@@ -11,11 +11,13 @@ if TYPE_CHECKING:
 
 
 class LibraryStatus(str, Enum):
+    # RF008: só 4 status, conforme o documento de requisitos (decidido
+    # em reunião de equipe em 04/09/2026) — sem "pausado", e "completo"
+    # virou "finalizado".
+    PLANEJADO = "planejado"  # "Quero jogar"
     JOGANDO = "jogando"
-    COMPLETO = "completo"
-    PAUSADO = "pausado"
+    FINALIZADO = "finalizado"
     ABANDONADO = "abandonado"
-    PLANEJADO = "planejado"
     
 class Library(SQLModel, table=True):
     __tablename__ = "tb_biblioteca"
