@@ -8,6 +8,7 @@ from app.schemas.game import (
     GameSimpleResponse,
     GameUpdate,
 )
+from app.schemas.library import LibraryDetailResponse
 
 from app.core.dependencies import SessionDep
 from app.core.dependencies_auth import AdminUser, CurrentUser
@@ -19,9 +20,11 @@ from app.services.rawg_service import (
     listar_jogos_rawg,
 )
 from app.services.rawg_import_service import (
+    buscar_jogo_local_por_rawg_id,
     importar_jogos_rawg,
     obter_ou_criar_jogo_por_rawg_id,
 )
+from app.repositories.library_repository import LibraryRepository
 from app.services.game_service import GameService
 
 router = APIRouter(prefix="/games", tags=["Games"])
@@ -101,6 +104,39 @@ def detalhes_do_jogo_rawg(rawg_id: int):
         return buscar_detalhes_jogo_rawg(rawg_id)
     except RuntimeError as exc:
         raise HTTPException(status_code=500, detail=str(exc))
+
+
+@router.get(
+    "/rawg/{rawg_id}/minha-biblioteca",
+    response_model=LibraryDetailResponse | None,
+)
+def minha_entrada_biblioteca_do_jogo(
+    rawg_id: int,
+    session: SessionDep,
+    user: CurrentUser,
+):
+    """
+    Diz se ESTE usuário já tem esse jogo (da RAWG) na biblioteca dele —
+    e devolve a entrada, se tiver. É o que a página de detalhes usa pra
+    decidir entre mostrar "Adicionar à Biblioteca" ou o formulário de
+    nota/review/horas.
+
+    Não importa o jogo pro banco só por causa dessa consulta: se ele
+    nunca foi importado (nem por este nem por outro usuário), a
+    resposta já é `null` sem nem chegar a olhar a tabela de biblioteca
+    — afinal, se o jogo não existe localmente, ninguém pode ter
+    adicionado ele ainda.
+    """
+    try:
+        jogo = buscar_jogo_local_por_rawg_id(session, rawg_id)
+    except RuntimeError as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+
+    if not jogo:
+        return None
+
+    repo = LibraryRepository(session)
+    return repo.get_by_user_and_game(user.usr_id, jogo.jgs_id)
 
 
 @router.post("/rawg/{rawg_id}/importar-um", response_model=GameSimpleResponse)

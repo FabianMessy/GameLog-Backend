@@ -24,6 +24,7 @@ class GameUpdate(BaseModel):
 
 class GameSimpleResponse(BaseModel):
     jgs_id: int
+    jgs_rawg_id: int | None = None
     jgs_titulo: str
     jgs_descricao: str
     jgs_lancamento: date
@@ -31,6 +32,8 @@ class GameSimpleResponse(BaseModel):
     jgs_distribuidor: str
     jgs_capa_url: HttpUrl | None
     jgs_nota_media: float
+    jgs_tempo_medio_horas: int | None = None
+    jgs_classificacao_indicativa: str | None = None
 
     model_config = {
         "from_attributes": True

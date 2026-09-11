@@ -38,6 +38,30 @@ def _obter_nome_primeiro_item(lista: list[dict[str, Any]] | None) -> str:
     return "Não informado"
 
 
+# Mapa aproximado de ESRB (o que a RAWG tem) pro rótulo de
+# classificação indicativa brasileira (o que o Figma pede). NÃO é uma
+# tradução oficial — ESRB e ClassInd usam critérios diferentes
+# (violência, conteúdo sexual e linguagem pesam de forma diferente em
+# cada sistema), e a RAWG só tem 5 níveis de ESRB enquanto o ClassInd
+# usado na tela tem 6 ("12" fica sem correspondente — nenhum jogo cai
+# nessa faixa por essa aproximação). Serve só pra não deixar o filtro
+# vazio; em qualquer lugar que mostrar esse valor pro usuário, deixar
+# claro que é aproximado, não a classificação oficial do jogo no Brasil.
+_ESRB_PARA_CLASSIND = {
+    "Everyone": "Livre",
+    "Everyone 10+": "10",
+    "Teen": "14",
+    "Mature": "16",
+    "Adults Only": "+18",
+}
+
+
+def _mapear_esrb_para_classind(esrb_rating: dict[str, Any] | None) -> str | None:
+    if not esrb_rating:
+        return None
+    return _ESRB_PARA_CLASSIND.get(esrb_rating.get("name"))
+
+
 def _get_or_create_genero(session: Session, nome: str) -> Genre:
     nome = _limitar_texto(nome, 50)
 
@@ -124,7 +148,7 @@ def importar_jogos_rawg(
                 continue
 
             ja_existe = session.exec(
-                select(Game).where(Game.jgs_titulo == titulo)
+                select(Game).where(Game.jgs_rawg_id == rawg_id)
             ).first()
 
             if ja_existe:
@@ -139,6 +163,7 @@ def importar_jogos_rawg(
                 descricao = detalhes.get("description_raw") or item.get("name")
 
                 jogo = Game(
+                    jgs_rawg_id=rawg_id,
                     jgs_titulo=titulo,
                     jgs_descricao=_limitar_texto(descricao, 120),
                     jgs_lancamento=_converter_data(item.get("released")),
@@ -146,6 +171,10 @@ def importar_jogos_rawg(
                     jgs_distribuidor=_limitar_texto(distribuidor, 120),
                     jgs_capa_url=_limitar_texto(item.get("background_image"), 255, padrao=""),
                     jgs_nota_media=float(item.get("rating") or 0),
+                    jgs_tempo_medio_horas=detalhes.get("playtime") or None,
+                    jgs_classificacao_indicativa=_mapear_esrb_para_classind(
+                        detalhes.get("esrb_rating")
+                    ),
                 )
 
                 session.add(jogo)
@@ -178,6 +207,22 @@ def importar_jogos_rawg(
     }
 
 
+def buscar_jogo_local_por_rawg_id(session: Session, rawg_id: int) -> Game | None:
+    """
+    Só consulta — nunca cria. Usada quando só precisamos saber se um
+    jogo do catálogo (RAWG) já foi importado pro banco local, sem
+    forçar a importação por causa disso (ex.: decidir se a página de
+    detalhes mostra o formulário de nota/review ou o botão "Adicionar
+    à Biblioteca").
+
+    Consulta direto por jgs_rawg_id — diferente de antes, não precisa
+    nem chamar a API da RAWG só pra fazer essa checagem.
+    """
+    return session.exec(
+        select(Game).where(Game.jgs_rawg_id == rawg_id)
+    ).first()
+
+
 def obter_ou_criar_jogo_por_rawg_id(session: Session, rawg_id: int) -> Game:
     """
     Usada pelo botão "Adicionar à Biblioteca" na página de detalhes: como
@@ -187,26 +232,23 @@ def obter_ou_criar_jogo_por_rawg_id(session: Session, rawg_id: int) -> Game:
     que o usuário quer adicionar — sem precisar ser admin nem rodar o
     /rawg/importar em lote.
 
-    Segue a mesma lógica de deduplicação que já existia em
-    importar_jogos_rawg (casa por jgs_titulo, não existe uma coluna de
-    rawg_id na tabela ainda). Se o jogo já foi importado antes (por
-    esse fluxo ou pelo /rawg/importar do admin), reaproveita o
-    registro em vez de duplicar.
+    Casa por jgs_rawg_id. Se o jogo já foi importado antes (por esse
+    fluxo ou pelo /rawg/importar do admin), reaproveita o registro em
+    vez de duplicar — e nesse caso nem precisa chamar a RAWG de novo.
     """
-    detalhes = buscar_detalhes_jogo_rawg(rawg_id)
-    titulo = _limitar_texto(detalhes.get("name"), 45)
-
-    jogo = session.exec(
-        select(Game).where(Game.jgs_titulo == titulo)
-    ).first()
+    jogo = buscar_jogo_local_por_rawg_id(session, rawg_id)
     if jogo:
         return jogo
+
+    detalhes = buscar_detalhes_jogo_rawg(rawg_id)
+    titulo = _limitar_texto(detalhes.get("name"), 45)
 
     desenvolvedor = _obter_nome_primeiro_item(detalhes.get("developers"))
     distribuidor = _obter_nome_primeiro_item(detalhes.get("publishers"))
     descricao = detalhes.get("description_raw") or detalhes.get("name")
 
     jogo = Game(
+        jgs_rawg_id=rawg_id,
         jgs_titulo=titulo,
         jgs_descricao=_limitar_texto(descricao, 120),
         jgs_lancamento=_converter_data(detalhes.get("released")),
@@ -217,6 +259,10 @@ def obter_ou_criar_jogo_por_rawg_id(session: Session, rawg_id: int) -> Game:
         # HttpUrl do GameSimpleResponse na resposta dessa rota.
         jgs_capa_url=detalhes.get("background_image") or None,
         jgs_nota_media=float(detalhes.get("rating") or 0),
+        jgs_tempo_medio_horas=detalhes.get("playtime") or None,
+        jgs_classificacao_indicativa=_mapear_esrb_para_classind(
+            detalhes.get("esrb_rating")
+        ),
     )
 
     session.add(jogo)
