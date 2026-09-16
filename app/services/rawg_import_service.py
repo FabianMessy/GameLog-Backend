@@ -169,7 +169,11 @@ def importar_jogos_rawg(
                     jgs_lancamento=_converter_data(item.get("released")),
                     jgs_desenvolvedor=_limitar_texto(desenvolvedor, 120),
                     jgs_distribuidor=_limitar_texto(distribuidor, 120),
-                    jgs_capa_url=_limitar_texto(item.get("background_image"), 255, padrao=""),
+                    # None (não "") quando não tem capa — string vazia
+                    # quebra a validação de HttpUrl em GameSimpleResponse
+                    # (mesmo tratamento de obter_ou_criar_jogo_por_rawg_id,
+                    # usado no fluxo de "Adicionar à Biblioteca").
+                    jgs_capa_url=_limitar_texto(item.get("background_image"), 255, padrao="") or None,
                     jgs_nota_media=float(item.get("rating") or 0),
                     jgs_tempo_medio_horas=detalhes.get("playtime") or None,
                     jgs_classificacao_indicativa=_mapear_esrb_para_classind(

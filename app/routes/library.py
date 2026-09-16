@@ -19,7 +19,7 @@ router = APIRouter(
 
 from app.core.dependencies_auth import CurrentUser 
 
-@router.post("/")
+@router.post("/", response_model=LibraryDetailResponse)
 def adicionar_jogo(
     dados: LibraryCreate,
     current_user: CurrentUser,
@@ -34,7 +34,7 @@ def adicionar_jogo(
     )
 
 
-@router.get("/")
+@router.get("/", response_model=list[LibraryDetailResponse])
 def listar_biblioteca(
     current_user: CurrentUser,
     service: Annotated[
