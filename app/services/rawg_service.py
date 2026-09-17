@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import random
 from typing import Any
 
 import httpx
@@ -102,3 +103,41 @@ def listar_jogos_rawg(
 
 def buscar_detalhes_jogo_rawg(rawg_id: int):
     return _request_rawg(f"games/{rawg_id}")
+
+
+def listar_jogos_populares_aleatorios(
+    genero: str | None = None,
+    tag: str | None = None,
+    amostra: int = 10,
+):
+    """
+    Sorteia `amostra` jogos de um POOL de jogos populares da RAWG — em
+    vez de sempre devolver o topo fixo do ranking (que é o que
+    `listar_jogos_rawg` com ordering="-rating" faz, e por isso sempre
+    mostrava os mesmos jogos no catálogo).
+
+    "Popular" aqui é medido por `ratings_count` (quantas avaliações o
+    jogo tem na RAWG) — é o dado que corresponde a "jogo mais famoso,
+    com mais reviews" pedido pelo usuário; não é o mesmo campo que
+    `rating` (a nota média) nem que `added` (quantos adicionaram à
+    biblioteca RAWG).
+
+    O pool é maior que a amostra (4x, até o teto de page_size=40 da
+    RAWG) pra sortear entre um leque real de jogos conhecidos, e não
+    só embaralhar a ordem dos mesmos 10/4 de sempre.
+    """
+    pool_size = min(max(amostra * 4, 20), 40)
+
+    params: dict[str, Any] = {
+        "ordering": "-ratings_count",
+        "page_size": pool_size,
+    }
+    if genero:
+        params["genres"] = genero
+    if tag:
+        params["tags"] = tag
+
+    dados = _request_rawg("games", params)
+    pool = dados.get("results", [])
+    dados["results"] = random.sample(pool, k=min(amostra, len(pool)))
+    return dados

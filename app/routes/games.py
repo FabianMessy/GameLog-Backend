@@ -17,6 +17,7 @@ from app.core.dependencies_game import get_game_service
 from app.services.rawg_service import (
     buscar_detalhes_jogo_rawg,
     buscar_jogos_rawg,
+    listar_jogos_populares_aleatorios,
     listar_jogos_rawg,
 )
 from app.services.rawg_import_service import (
@@ -72,6 +73,7 @@ def listar_jogos_da_rawg(
     genero: str | None = None,
     tag: str | None = None,
     ordering: str | None = None,
+    aleatorio: bool = False,
     page: int = 1,
     page_size: int = 20,
 ):
@@ -79,8 +81,22 @@ def listar_jogos_da_rawg(
     Lista jogos direto da RAWG (sem exigir 'nome' e sem tocar no banco
     local) — é o que alimenta o catálogo: destaques, categorias e busca
     usam essa mesma rota, só variando os parâmetros.
+
+    `aleatorio=true` troca o ranking fixo por uma amostra sorteada de
+    um pool de jogos populares (ver
+    rawg_service.listar_jogos_populares_aleatorios) — usado pelo
+    carrossel de destaque e pela grade "Populares" do catálogo, pra
+    não repetir sempre os mesmos jogos na mesma ordem. Não se aplica
+    junto de busca por nome: quem está buscando quer o resultado mais
+    relevante pro termo, não uma amostra aleatória.
     """
     try:
+        if aleatorio and not nome:
+            return listar_jogos_populares_aleatorios(
+                genero=genero,
+                tag=tag,
+                amostra=page_size,
+            )
         return listar_jogos_rawg(
             nome=nome,
             genero=genero,
