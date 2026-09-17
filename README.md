@@ -1,6 +1,6 @@
 # GameLog-Backend
 Backend section for GameLog
-rodar: uvicorn app.main:main --reload
+rodar: uvicorn app.main:app --reload
 
 - Alembic:
   1. Criar conexão no MySQL:
