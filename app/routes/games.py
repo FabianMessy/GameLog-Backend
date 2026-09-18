@@ -8,7 +8,7 @@ from app.schemas.game import (
     GameSimpleResponse,
     GameUpdate,
 )
-from app.schemas.library import LibraryDetailResponse
+from app.schemas.library import LibraryDetailResponse, LibraryReviewResponse
 
 from app.core.dependencies import SessionDep
 from app.core.dependencies_auth import AdminUser, CurrentUser
@@ -153,6 +153,40 @@ def minha_entrada_biblioteca_do_jogo(
 
     repo = LibraryRepository(session)
     return repo.get_by_user_and_game(user.usr_id, jogo.jgs_id)
+
+
+@router.get(
+    "/rawg/{rawg_id}/reviews",
+    response_model=list[LibraryReviewResponse],
+)
+def reviews_do_jogo_rawg(
+    rawg_id: int,
+    session: SessionDep,
+):
+    """
+    Reviews públicas (nota + texto) de outros usuários pra um jogo da
+    RAWG (RF013). Só leitura — a página de detalhes não ganhou
+    formulário próprio de avaliação; quem quiser review/nota continua
+    dando pela Biblioteca (RF010-012), isso aqui só exibe o que já foi
+    salvo lá.
+
+    Sem exigir login: reviews são públicas, então qualquer visitante
+    pode ver, mesmo sem sessão.
+
+    Se o jogo nunca foi importado pro banco local (nem por este nem
+    por outro usuário), não existe como ter review nenhuma — devolve
+    lista vazia sem nem consultar tb_biblioteca.
+    """
+    try:
+        jogo = buscar_jogo_local_por_rawg_id(session, rawg_id)
+    except RuntimeError as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+
+    if not jogo:
+        return []
+
+    repo = LibraryRepository(session)
+    return repo.get_reviews_by_game(jogo.jgs_id)
 
 
 @router.post("/rawg/{rawg_id}/importar-um", response_model=GameSimpleResponse)
