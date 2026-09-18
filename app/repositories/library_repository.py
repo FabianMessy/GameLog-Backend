@@ -38,6 +38,21 @@ class LibraryRepository:
 
         return self.session.exec(statement).first()
 
+    def get_reviews_by_game(self, game_id: int) -> list[Library]:
+        # RF013: só entram aqui entradas com review escrita (texto em
+        # bib_usr_avaliacao). Quem só deu nota, sem escrever nada, não
+        # aparece como "review" na página de detalhes — a nota geral
+        # do jogo (jgs_nota_media) já cobre esse caso agregado.
+        statement = (
+            select(Library)
+            .where(
+                Library.bib_jgs_id == game_id,
+                Library.bib_usr_avaliacao.is_not(None),
+            )
+            .order_by(Library.bib_updated_at.desc())
+        )
+        return self.session.exec(statement).all()
+
     def update(self, library: Library) -> Library:
         self.session.add(library)
         self.session.commit()
