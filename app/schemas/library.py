@@ -7,6 +7,23 @@ from app.models.library import LibraryStatus
 from app.schemas.user import UserSimpleResponse
 from app.schemas.game import GameSimpleResponse
 
+
+
+class LibraryFilters(BaseModel):
+    avaliacao_min: int | None = None
+    avaliacao_max: int | None = None
+
+    lancamento_inicio: date | None = None
+    lancamento_fim: date | None = None
+
+    generos: list[str] | None = None
+    status: list[LibraryStatus] | None = None
+
+    horas_min: int | None = None
+    horas_max: int | None = None
+
+    classificacoes: list[str] | None = None
+
 class LibraryCreate(BaseModel):
     bib_status: LibraryStatus
     bib_jgs_id: int

@@ -1,13 +1,15 @@
 from typing import Annotated
+from datetime import date
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, Query
 
 from app.core.dependencies import get_library_service
 from app.schemas.library import (
     LibraryCreate,
     LibraryDetailResponse,
     LibrarySimpleResponse,
-    LibraryUpdate
+    LibraryUpdate,
+    LibraryFilters
 )
 from app.services.library_service import LibraryService
 
@@ -40,9 +42,30 @@ def listar_biblioteca(
     service: Annotated[
         LibraryService,
         Depends(get_library_service)
-    ]
+    ],
+    avaliacao_min: int | None = None,
+    avaliacao_max: int | None = None,
+    lancamento_inicio: date | None = None,
+    lancamento_fim: date | None = None,
+    generos: list[str] | None = Query(default=None),
+    status: list[str] | None = Query(default=None),
+    horas_min: int | None = None,
+    horas_max: int | None = None,
+    classificacoes: list[str] | None = Query(default=None)
 ):
-    return service.listar_biblioteca(current_user.usr_id)
+    filtros = LibraryFilters(
+        avaliacao_min=avaliacao_min,
+        avaliacao_max=avaliacao_max,
+        lancamento_inicio=lancamento_inicio,
+        lancamento_fim=lancamento_fim,
+        generos=generos,
+        status=status,
+        horas_min=horas_min,
+        horas_max=horas_max,
+        classificacoes=classificacoes
+    )
+
+    return service.listar_biblioteca(current_user.usr_id, filtros)
 
 
 @router.get(

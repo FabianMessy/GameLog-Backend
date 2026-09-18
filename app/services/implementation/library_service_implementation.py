@@ -4,7 +4,7 @@ from fastapi import HTTPException
 
 from app.models.library import Library
 from app.repositories.library_repository import LibraryRepository
-from app.schemas.library import LibraryCreate, LibraryUpdate
+from app.schemas.library import LibraryCreate, LibraryUpdate, LibraryFilters
 from app.services.library_service import LibraryService
 
 
@@ -39,10 +39,11 @@ class LibraryServiceImpl(LibraryService):
 
     def listar_biblioteca(
         self,
-        usuario_id: int
+        usuario_id: int,
+        filtros: LibraryFilters | None = None
     ):
 
-        return self.repository.get_by_user(usuario_id)
+        return self.repository.get_by_user(usuario_id, filtros)
 
     def buscar_por_id(
         self,

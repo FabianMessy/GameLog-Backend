@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 from app.models.library import Library
-from app.schemas.library import LibraryCreate, LibraryUpdate
+from app.schemas.library import LibraryCreate, LibraryUpdate, LibraryFilters
 
 
 class LibraryService(ABC):
@@ -17,7 +17,8 @@ class LibraryService(ABC):
     @abstractmethod
     def listar_biblioteca(
         self,
-        usuario_id: int
+        usuario_id: int,
+        filtros: LibraryFilters | None = None
     ) -> list[Library]:
         pass
 
