@@ -51,7 +51,22 @@ class LibraryDetailResponse(LibrarySimpleResponse):
     usuario: UserSimpleResponse
     jogo: GameSimpleResponse
 
+class LibraryReviewResponse(BaseModel):
+    bib_id: int
+
+    bib_usr_nota: int | None
+    bib_usr_avaliacao: str | None
+
+    bib_updated_at: datetime
+
+    usuario: UserSimpleResponse
+
+    model_config = {
+        "from_attributes": True
+    }
+
 from app.schemas.user import UserSimpleResponse
 from app.schemas.game import GameSimpleResponse
 
-LibraryDetailResponse.model_rebuild()   
+LibraryDetailResponse.model_rebuild()
+LibraryReviewResponse.model_rebuild()
