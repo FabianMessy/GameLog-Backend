@@ -44,10 +44,17 @@ def criar_jogo(
     }
 
 
-@router.get("/", response_model=list[GameSimpleResponse])
+@router.get("/", response_model=list[GameDetailResponse])
 def listar_jogos(
     service: Annotated[GameService, Depends(get_game_service)],
 ):
+    """
+    Lista os jogos já importados pro banco local (tb_jogos) — é o que
+    alimenta a Biblioteca. Precisa de GameDetailResponse (não
+    GameSimpleResponse) porque o filtro de Gênero (RF009) roda no
+    front sobre `jogo.generos` — com GameSimpleResponse esse campo
+    nem vem na resposta, e o filtro nunca bate com nada.
+    """
     return service.listar_jogos()
 
 
