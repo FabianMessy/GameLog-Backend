@@ -166,6 +166,7 @@ def minha_entrada_biblioteca_do_jogo(
     "/rawg/{rawg_id}/reviews",
     response_model=list[LibraryReviewResponse],
 )
+
 def reviews_do_jogo_rawg(
     rawg_id: int,
     session: SessionDep,

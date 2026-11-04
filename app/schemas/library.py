@@ -4,7 +4,7 @@ from pydantic import BaseModel
 
 from app.models.library import LibraryStatus
 
-from app.schemas.user import UserSimpleResponse
+from app.schemas.user import UserSimpleResponse, UserPublicResponse
 from app.schemas.game import GameSimpleResponse
 
 
@@ -76,7 +76,7 @@ class LibraryReviewResponse(BaseModel):
 
     bib_updated_at: datetime
 
-    usuario: UserSimpleResponse
+    usuario: UserPublicResponse
 
     model_config = {
         "from_attributes": True

@@ -7,7 +7,7 @@ from app.core.security import (
 )
 from app.models.users import User
 from app.repositories.users_repository import UsersRepository
-from app.schemas.user import UserCreate
+from app.schemas.user import UserCreate, UserUpdate
 from app.services.user_service import UserService
 
 
@@ -17,12 +17,16 @@ class UserServiceImpl(UserService):
         self.repository = repository
 
     def registrar(self, dados: UserCreate) -> User:
-        usuario_existente = self.repository.get_by_email(dados.usr_email)
-
-        if usuario_existente:
+        if self.repository.get_by_email(dados.usr_email):
             raise HTTPException(
                 status_code=400,
                 detail="Email já cadastrado"
+            )
+
+        if self.repository.get_by_username(dados.usr_nome_usuario):
+            raise HTTPException(
+                status_code=400,
+                detail="Nome de usuário já está em uso"
             )
 
         novo_usuario = User(
@@ -63,3 +67,38 @@ class UserServiceImpl(UserService):
             )
 
         return usuario
+
+    def atualizar(self, user_id: int, dados: UserUpdate) -> User:
+        usuario = self.buscar_por_id(user_id)
+
+        # exclude_unset: só o que o cliente realmente enviou. Isso permite
+        # distinguir "não mexe" (campo ausente) de "limpa" (avatar/bio = null).
+        campos = dados.model_dump(exclude_unset=True)
+
+        # Reenviar o próprio valor não é conflito; só barra se pertence a OUTRA pessoa.
+        novo_email = campos.get("usr_email")
+        if novo_email is not None and novo_email != usuario.usr_email:
+            dono = self.repository.get_by_email(novo_email)
+            if dono and dono.usr_id != usuario.usr_id:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Email já cadastrado"
+                )
+
+        novo_nome = campos.get("usr_nome_usuario")
+        if novo_nome is not None and novo_nome != usuario.usr_nome_usuario:
+            dono = self.repository.get_by_username(novo_nome)
+            if dono and dono.usr_id != usuario.usr_id:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Nome de usuário já está em uso"
+                )
+
+        # O schema devolve HttpUrl; a coluna é string.
+        if campos.get("usr_avatar_url") is not None:
+            campos["usr_avatar_url"] = str(campos["usr_avatar_url"])
+
+        for campo, valor in campos.items():
+            setattr(usuario, campo, valor)
+
+        return self.repository.update(usuario)

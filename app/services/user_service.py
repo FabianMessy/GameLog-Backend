@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 from app.models.users import User
-from app.schemas.user import UserCreate
+from app.schemas.user import UserCreate, UserUpdate
 
 
 class UserService(ABC):
@@ -17,4 +17,9 @@ class UserService(ABC):
 
     @abstractmethod
     def buscar_por_id(self, user_id: int) -> User:
+        pass
+
+    @abstractmethod
+    def atualizar(self, user_id: int, dados: UserUpdate) -> User:
+        """Atualiza só os campos enviados do perfil do próprio usuário."""
         pass
