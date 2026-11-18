@@ -74,7 +74,7 @@ class Game(SQLModel, table=True):
     # campo é uma APROXIMAÇÃO calculada a partir do ESRB no momento da
     # importação (ver _mapear_esrb_para_classind em
     # rawg_import_service.py); nunca é a classificação oficial
-    # brasileira do jogo. Fica None quando a RAWG não informa ESRB.
+    # brasileira do jogo. Quando a RAWG não informa ESRB, vale "+18".
     jgs_classificacao_indicativa: Optional[str] = Field(
         default=None,
         max_length=10,

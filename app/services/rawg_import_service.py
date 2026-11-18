@@ -8,6 +8,11 @@ from app.models.game_genre import GameGenre
 from app.models.game_platform import GamePlatform
 from app.models.genre import Genre
 from app.models.platform import Platform
+from app.services.filtro_conteudo import (
+    CLASSIFICACAO_PADRAO,
+    JogoBloqueadoError,
+    titulo_bloqueado,
+)
 from app.services.rawg_service import (
     buscar_detalhes_jogo_rawg,
     buscar_jogos_rawg,
@@ -47,6 +52,9 @@ def _obter_nome_primeiro_item(lista: list[dict[str, Any]] | None) -> str:
 # nessa faixa por essa aproximação). Serve só pra não deixar o filtro
 # vazio; em qualquer lugar que mostrar esse valor pro usuário, deixar
 # claro que é aproximado, não a classificação oficial do jogo no Brasil.
+#
+# Jogo sem ESRB (ou com ESRB fora deste mapa, como "Rating Pending") entra
+# como "+18": na dúvida, a classificação mais restrita.
 _ESRB_PARA_CLASSIND = {
     "Everyone": "Livre",
     "Everyone 10+": "10",
@@ -56,10 +64,10 @@ _ESRB_PARA_CLASSIND = {
 }
 
 
-def _mapear_esrb_para_classind(esrb_rating: dict[str, Any] | None) -> str | None:
+def _mapear_esrb_para_classind(esrb_rating: dict[str, Any] | None) -> str:
     if not esrb_rating:
-        return None
-    return _ESRB_PARA_CLASSIND.get(esrb_rating.get("name"))
+        return CLASSIFICACAO_PADRAO
+    return _ESRB_PARA_CLASSIND.get(esrb_rating.get("name"), CLASSIFICACAO_PADRAO)
 
 
 def _get_or_create_genero(session: Session, nome: str) -> Genre:
@@ -242,6 +250,9 @@ def obter_ou_criar_jogo_por_rawg_id(session: Session, rawg_id: int) -> Game:
     """
     jogo = buscar_jogo_local_por_rawg_id(session, rawg_id)
     if jogo:
+        # Um jogo bloqueado pode ter sido importado antes da regra existir.
+        if titulo_bloqueado(jogo.jgs_titulo):
+            raise JogoBloqueadoError(f"Jogo {rawg_id} não está disponível")
         return jogo
 
     detalhes = buscar_detalhes_jogo_rawg(rawg_id)

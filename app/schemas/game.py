@@ -1,6 +1,8 @@
 from __future__ import annotations
 from datetime import date
-from pydantic import BaseModel, HttpUrl
+from pydantic import BaseModel, HttpUrl, field_validator
+
+from app.services.filtro_conteudo import CLASSIFICACAO_PADRAO
 from app.schemas.genre import GenreSimpleResponse
 from app.schemas.platform import PlatformSimpleResponse
 
@@ -33,11 +35,17 @@ class GameSimpleResponse(BaseModel):
     jgs_capa_url: HttpUrl | None
     jgs_nota_media: float
     jgs_tempo_medio_horas: int | None = None
-    jgs_classificacao_indicativa: str | None = None
+    jgs_classificacao_indicativa: str = CLASSIFICACAO_PADRAO
 
     model_config = {
         "from_attributes": True
     }
+
+    @field_validator("jgs_classificacao_indicativa", mode="before")
+    @classmethod
+    def _sem_classificacao_vira_padrao(cls, valor):
+        # Jogos salvos antes desta regra ainda têm NULL no banco.
+        return valor or CLASSIFICACAO_PADRAO
 
 class GameDetailResponse(GameSimpleResponse):
     generos: list[GenreSimpleResponse]

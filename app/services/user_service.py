@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 from app.models.users import User
-from app.schemas.user import UserCreate, UserUpdate
+from app.schemas.user import UserCreate, UserPasswordChange, UserUpdate
 
 
 class UserService(ABC):
@@ -22,4 +22,9 @@ class UserService(ABC):
     @abstractmethod
     def atualizar(self, user_id: int, dados: UserUpdate) -> User:
         """Atualiza só os campos enviados do perfil do próprio usuário."""
+        pass
+
+    @abstractmethod
+    def alterar_senha(self, user_id: int, dados: UserPasswordChange) -> None:
+        """Troca a senha do usuário, exigindo a senha atual."""
         pass

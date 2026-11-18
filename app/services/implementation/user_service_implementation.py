@@ -7,7 +7,7 @@ from app.core.security import (
 )
 from app.models.users import User
 from app.repositories.users_repository import UsersRepository
-from app.schemas.user import UserCreate, UserUpdate
+from app.schemas.user import UserCreate, UserPasswordChange, UserUpdate
 from app.services.user_service import UserService
 
 
@@ -102,3 +102,23 @@ class UserServiceImpl(UserService):
             setattr(usuario, campo, valor)
 
         return self.repository.update(usuario)
+
+    def alterar_senha(self, user_id: int, dados: UserPasswordChange) -> None:
+        usuario = self.buscar_por_id(user_id)
+
+        # 400 (e não 401) para a tela não confundir "senha atual errada"
+        # com "sessão expirada".
+        if not verify_password(dados.usr_senha_atual, usuario.usr_senha):
+            raise HTTPException(
+                status_code=400,
+                detail="Senha atual incorreta"
+            )
+
+        if dados.usr_senha_atual == dados.usr_senha_nova:
+            raise HTTPException(
+                status_code=400,
+                detail="A nova senha deve ser diferente da atual"
+            )
+
+        usuario.usr_senha = hash_password(dados.usr_senha_nova)
+        self.repository.update(usuario)

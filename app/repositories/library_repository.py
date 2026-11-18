@@ -1,9 +1,13 @@
 from sqlmodel import Session, select
-from sqlalchemy import and_
+from sqlalchemy import and_, or_
 from app.models.game import Game
 from app.models.genre import Genre
 from app.models.game_genre import GameGenre
 from app.schemas.library import LibraryFilters
+from app.services.filtro_conteudo import (
+    CLASSIFICACAO_PADRAO,
+    TERMOS_BLOQUEADOS_NO_TITULO,
+)
 
 from app.models.library import Library
 
@@ -35,6 +39,10 @@ class LibraryRepository:
             .join(Game, Game.jgs_id == Library.bib_jgs_id)
             .where(Library.bib_usr_id == user_id)
         )
+
+        # Jogos com título bloqueado não aparecem na biblioteca (ver filtro_conteudo).
+        for termo in TERMOS_BLOQUEADOS_NO_TITULO:
+            statement = statement.where(~Game.jgs_titulo.ilike(f"%{termo}%"))
 
         if filtros:
             if filtros.avaliacao_min is not None:
@@ -73,9 +81,15 @@ class LibraryRepository:
                 )
 
             if filtros.classificacoes:
-                statement = statement.where(
-                    Game.jgs_classificacao_indicativa.in_(filtros.classificacoes)
+                condicao = Game.jgs_classificacao_indicativa.in_(
+                    filtros.classificacoes
                 )
+                # Jogo salvo sem classificação (NULL) conta como "+18".
+                if CLASSIFICACAO_PADRAO in filtros.classificacoes:
+                    condicao = or_(
+                        condicao, Game.jgs_classificacao_indicativa.is_(None)
+                    )
+                statement = statement.where(condicao)
 
             if filtros.generos:
                 statement = statement.join(

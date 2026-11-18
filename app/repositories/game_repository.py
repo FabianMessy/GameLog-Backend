@@ -1,6 +1,7 @@
 from sqlmodel import Session, select
 
 from app.models.game import Game
+from app.services.filtro_conteudo import TERMOS_BLOQUEADOS_NO_TITULO
 
 
 class GameRepository:
@@ -32,7 +33,11 @@ class GameRepository:
         return self.session.exec(statement).first()
 
     def list_all(self) -> list[Game]:
-        return self.session.exec(select(Game)).all()
+        # Jogos com título bloqueado ficam escondidos (ver filtro_conteudo).
+        statement = select(Game)
+        for termo in TERMOS_BLOQUEADOS_NO_TITULO:
+            statement = statement.where(~Game.jgs_titulo.ilike(f"%{termo}%"))
+        return self.session.exec(statement).all()
 
     def update(self, game: Game) -> Game:
         self.session.add(game)

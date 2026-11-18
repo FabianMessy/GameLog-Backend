@@ -73,6 +73,24 @@ class UserUpdate(BaseModel):
         return valor or None
 
 
+class UserPasswordChange(BaseModel):
+    """
+    Corpo do PATCH /auth/me/senha. A senha atual é exigida para que quem
+    pegar uma sessão aberta não consiga trocar a senha da conta.
+    """
+    usr_senha_atual: str = Field(min_length=1, max_length=72)
+    # 8 a 72: mesmas regras do cadastro (o bcrypt só olha os 72 primeiros bytes).
+    usr_senha_nova: str = Field(min_length=8, max_length=72)
+
+    @field_validator("usr_senha_nova")
+    @classmethod
+    def _senha_com_numero(cls, valor: str):
+        # Regra do protótipo: mínimo de 8 caracteres e pelo menos 1 número.
+        if not any(c.isdigit() for c in valor):
+            raise ValueError("a senha deve ter pelo menos 1 número")
+        return valor
+
+
 class UserSimpleResponse(BaseModel):
     usr_id: int
 

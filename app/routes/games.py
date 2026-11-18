@@ -14,6 +14,7 @@ from app.core.dependencies import SessionDep
 from app.core.dependencies_auth import AdminUser, CurrentUser
 from app.core.dependencies_game import get_game_service
 
+from app.services.filtro_conteudo import JogoBloqueadoError, titulo_bloqueado
 from app.services.rawg_service import (
     buscar_detalhes_jogo_rawg,
     buscar_jogos_rawg,
@@ -125,6 +126,8 @@ def detalhes_do_jogo_rawg(rawg_id: int):
     """
     try:
         return buscar_detalhes_jogo_rawg(rawg_id)
+    except JogoBloqueadoError:
+        raise HTTPException(status_code=404, detail="Jogo não encontrado")
     except RuntimeError as exc:
         raise HTTPException(status_code=500, detail=str(exc))
 
@@ -214,6 +217,8 @@ def importar_um_jogo_da_rawg(
     """
     try:
         return obter_ou_criar_jogo_por_rawg_id(session, rawg_id)
+    except JogoBloqueadoError:
+        raise HTTPException(status_code=404, detail="Jogo não encontrado")
     except RuntimeError as exc:
         raise HTTPException(status_code=500, detail=str(exc))
 
@@ -242,7 +247,10 @@ def get_game_by_id(
     game_id: int,
     service: Annotated[GameService, Depends(get_game_service)],
 ):
-    return service.buscar_por_id(game_id)
+    jogo = service.buscar_por_id(game_id)
+    if titulo_bloqueado(jogo.jgs_titulo):
+        raise HTTPException(status_code=404, detail="Jogo não encontrado")
+    return jogo
 
 
 @router.put("/{game_id}", response_model=GameDetailResponse)

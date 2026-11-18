@@ -6,6 +6,11 @@ from typing import Any
 import httpx
 
 from app.core.config import settings
+from app.services.filtro_conteudo import (
+    JogoBloqueadoError,
+    remover_jogos_bloqueados,
+    titulo_bloqueado,
+)
 
 RAWG_API_KEY = settings.RAWG_API_KEY
 
@@ -45,14 +50,22 @@ def _request_rawg(endpoint: str, params: dict[str, Any] | None = None) -> dict[s
     return response.json()
 
 
+def _sem_bloqueados(dados: dict[str, Any]) -> dict[str, Any]:
+    """Tira os jogos bloqueados (ver filtro_conteudo) da lista de resultados."""
+    dados["results"] = remover_jogos_bloqueados(dados.get("results", []))
+    return dados
+
+
 def buscar_jogos_rawg(nome: str, page_size: int = 10, page: int = 1):
-    return _request_rawg(
-        "games",
-        {
-            "search": nome,
-            "page_size": page_size,
-            "page": page,
-        },
+    return _sem_bloqueados(
+        _request_rawg(
+            "games",
+            {
+                "search": nome,
+                "page_size": page_size,
+                "page": page,
+            },
+        )
     )
 
 
@@ -98,11 +111,19 @@ def listar_jogos_rawg(
     if tag:
         params["tags"] = tag
 
-    return _request_rawg("games", params)
+    return _sem_bloqueados(_request_rawg("games", params))
 
 
 def buscar_detalhes_jogo_rawg(rawg_id: int):
-    return _request_rawg(f"games/{rawg_id}")
+    """
+    Detalhes de um jogo na RAWG. Lança JogoBloqueadoError se o título for
+    bloqueado, o que cobre a página de detalhes, a importação e o
+    "Adicionar à Biblioteca" de uma vez.
+    """
+    detalhes = _request_rawg(f"games/{rawg_id}")
+    if titulo_bloqueado(detalhes.get("name")):
+        raise JogoBloqueadoError(f"Jogo {rawg_id} não está disponível")
+    return detalhes
 
 
 def listar_jogos_populares_aleatorios(
@@ -138,6 +159,7 @@ def listar_jogos_populares_aleatorios(
         params["tags"] = tag
 
     dados = _request_rawg("games", params)
-    pool = dados.get("results", [])
+    # Filtra ANTES de sortear, senão um bloqueado sorteado deixaria a amostra menor.
+    pool = remover_jogos_bloqueados(dados.get("results", []))
     dados["results"] = random.sample(pool, k=min(amostra, len(pool)))
     return dados
